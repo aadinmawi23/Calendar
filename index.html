@@ -506,6 +506,60 @@ html, body { height:auto; min-height:100%; overflow-y:auto; }
   .account-menu { width: min(258px, calc(100vw - 24px)); }
 }
 
+
+/* SYLLABUS_CHECKLIST_PATCH_V1 */
+.nav button[data-page="syllabus"] { margin-top: 3px; }
+.syllabus-page { display:flex; flex-direction:column; gap:18px; }
+.syllabus-intro { color:var(--muted); font-size:12px; margin-top:6px; }
+.syllabus-subject-grid {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;
+}
+.syllabus-subject-card {
+  border:1px solid var(--line); border-radius:17px; padding:19px;
+  background:linear-gradient(145deg,#fffdf9 0%,#fbf5ed 100%);
+  cursor:pointer; text-align:left; min-width:0; color:var(--ink);
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.syllabus-subject-card:hover {
+  transform:translateY(-2px); border-color:#d5c4b3;
+  box-shadow:0 7px 20px rgba(71,57,45,.07);
+}
+.syllabus-subject-name { font:22px Georgia,serif; margin:0 0 8px; }
+.syllabus-subject-meta { color:var(--muted); font-size:11px; }
+.syllabus-progress { height:5px; border-radius:9px; background:#e9e1d7; margin-top:15px; overflow:hidden; }
+.syllabus-progress > span { display:block; height:100%; background:#8eaa91; border-radius:9px; }
+.syllabus-detail { display:flex; flex-direction:column; gap:13px; }
+.syllabus-back { align-self:flex-start; }
+.syllabus-topic {
+  border:1px solid var(--line); border-radius:14px; background:#fffdf9; overflow:hidden;
+}
+.syllabus-topic-head {
+  display:flex; align-items:center; gap:10px; padding:13px 14px;
+  background:#faf5ed; border-bottom:1px solid var(--line);
+}
+.syllabus-topic-head h3 { margin:0; font-size:14px; font-weight:700; flex:1; }
+.syllabus-topic-count { color:var(--muted); font-size:10px; white-space:nowrap; }
+.syllabus-subtopic-list { display:flex; flex-direction:column; padding:4px 14px; }
+.syllabus-subtopic {
+  display:flex; align-items:flex-start; gap:10px; padding:11px 0;
+  border-bottom:1px solid #eee7df; font-size:12px; line-height:1.45;
+}
+.syllabus-subtopic:last-child { border-bottom:0; }
+.syllabus-subtopic input { margin:2px 0 0; accent-color:#789477; flex:0 0 auto; }
+.syllabus-subtopic span { min-width:0; overflow-wrap:anywhere; }
+.syllabus-subtopic input:checked + span { color:var(--muted); text-decoration:line-through; }
+.syllabus-empty { padding:18px; color:var(--muted); font-size:12px; }
+@media(max-width:700px) {
+  .syllabus-subject-grid { grid-template-columns:1fr; gap:10px; }
+  .syllabus-subject-card { padding:15px; }
+  .syllabus-subject-name { font-size:20px; }
+  .syllabus-topic-head { padding:11px; }
+  .syllabus-subtopic-list { padding:3px 11px; }
+}
+
+
+/* Hide descriptive text beneath page headings */
+.page-subtitle { display: none !important; }
 </style>
 
 </head>
@@ -518,6 +572,7 @@ html, body { height:auto; min-height:100%; overflow-y:auto; }
     <button class="active" data-page="home">Home</button>
     <button data-page="academic">Academic Calendar</button>
     <button data-page="personal">Personal Calendar</button>
+    <button data-page="syllabus">Syllabus</button>
   </nav>
   <div class="sidebar-account">
     <button type="button" id="account-trigger" class="account-trigger"
@@ -889,7 +944,7 @@ function renderDailyPlanner(date,page="academic"){
 
   main.innerHTML=`
     <div class="daily-planner-head">
-      <button class="daily-planner-back" id="daily-back" aria-label="Back to calendar" title="Back to calendar">←</button>
+      <button aria-label="Back to calendar" title="Back to calendar" class="daily-planner-back" id="daily-back" aria-label="Back to calendar" title="Back to calendar">←</button>
       <div><h2 class="daily-planner-date">${dateText}</h2><div class="page-subtitle">Daily planner</div></div>
       <div class="daily-planner-actions"><button class="primary" id="daily-add">＋ Task</button></div>
     </div>
@@ -1380,12 +1435,156 @@ $("cancel-edit").onclick=()=>{editingId=null;openDateModal(selectedDate,null,act
 $("close-modal").onclick=()=>$("modal-backdrop").classList.remove("open");
 $("modal-backdrop").addEventListener("click",e=>{if(e.target===$("modal-backdrop"))$("modal-backdrop").classList.remove("open");});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modal-backdrop").classList.remove("open");});
+
+// SYLLABUS_CHECKLIST_PATCH_V1
+const SYLLABUS_STORAGE_KEY = "plannerSyllabusChecklist_v1";
+const SYLLABUS_SUBJECTS = ["Maths", "General Studies", "Reasoning", "English"];
+let activeSyllabusSubject = null;
+
+function syllabusEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[ch]));
+}
+
+function loadSyllabusChecks() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SYLLABUS_STORAGE_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch { return {}; }
+}
+
+function saveSyllabusChecks(checks) {
+  localStorage.setItem(SYLLABUS_STORAGE_KEY, JSON.stringify(checks));
+}
+
+function getSyllabusTree(subject) {
+  const rows = (Array.isArray(importedEvents) ? importedEvents : [])
+    .filter(e => e.subject === subject && String(e.title || "").trim());
+  const topics = new Map();
+
+  for (const event of rows) {
+    const title = String(event.title || "").trim();
+    const colon = title.indexOf(":");
+    let topic, subtopic;
+    if (colon > 0) {
+      topic = title.slice(0, colon).trim();
+      subtopic = title.slice(colon + 1).trim();
+    } else {
+      topic = "Topics";
+      subtopic = title;
+    }
+    if (!topic) topic = "Topics";
+    if (!subtopic) subtopic = title;
+    if (!topics.has(topic)) topics.set(topic, new Set());
+    topics.get(topic).add(subtopic);
+  }
+
+  return [...topics.entries()]
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .map(([topic, subs]) => ({
+      topic,
+      subtopics: [...subs].sort((a,b) => a.localeCompare(b))
+    }));
+}
+
+function renderSyllabus() {
+  const main = $("main");
+  if (!main) return;
+  const checks = loadSyllabusChecks();
+
+  if (!activeSyllabusSubject) {
+    main.innerHTML = `
+      <div class="page-head">
+        <div><h2>Syllabus</h2><div class="syllabus-intro"></div></div>
+      </div>
+      <div class="syllabus-page">
+        <div class="syllabus-subject-grid">
+          ${SYLLABUS_SUBJECTS.map(subject => {
+            const tree = getSyllabusTree(subject);
+            const items = tree.flatMap(t => t.subtopics.map(sub => `${t.topic}::${sub}`));
+            const completed = items.filter(id => checks[subject + "::" + id] === true).length;
+            const pct = items.length ? Math.round(completed / items.length * 100) : 0;
+            return `<button type="button" class="syllabus-subject-card" data-syllabus-subject="${syllabusEscape(subject)}">
+              <h3 class="syllabus-subject-name">${syllabusEscape(subject)}</h3>
+              <div class="syllabus-subject-meta">${tree.length} topics · ${items.length} checklist items</div>
+              <div class="syllabus-subject-meta" style="margin-top:7px">${completed} of ${items.length} completed · ${pct}%</div>
+              <div class="syllabus-progress"><span style="width:${pct}%"></span></div>
+            </button>`;
+          }).join("")}
+        </div>
+      </div>`;
+    main.querySelectorAll("[data-syllabus-subject]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeSyllabusSubject = button.dataset.syllabusSubject;
+        renderSyllabus();
+      });
+    });
+    return;
+  }
+
+  const subject = activeSyllabusSubject;
+  const tree = getSyllabusTree(subject);
+  const total = tree.reduce((n,t) => n + t.subtopics.length, 0);
+  const completed = tree.reduce((n,t) => n + t.subtopics.filter(sub =>
+    checks[subject + "::" + t.topic + "::" + sub] === true
+  ).length, 0);
+
+  main.innerHTML = `
+    <div class="page-head">
+      <div><h2>Syllabus</h2><div class="syllabus-intro">${syllabusEscape(subject)} · ${completed} of ${total} subtopics completed</div></div>
+    </div>
+    <div class="syllabus-detail">
+      <button type="button" class="secondary syllabus-back" id="syllabus-back">← </button>
+      ${tree.length ? tree.map(topic => {
+        const done = topic.subtopics.filter(sub =>
+          checks[subject + "::" + topic.topic + "::" + sub] === true
+        ).length;
+        return `<section class="syllabus-topic">
+          <div class="syllabus-topic-head">
+            <h3>${syllabusEscape(topic.topic)}</h3>
+            <span class="syllabus-topic-count">${done}/${topic.subtopics.length} done</span>
+          </div>
+          <div class="syllabus-subtopic-list">
+            ${topic.subtopics.map(sub => {
+              const id = subject + "::" + topic.topic + "::" + sub;
+              const checked = checks[id] === true;
+              return `<label class="syllabus-subtopic">
+                <input type="checkbox" data-syllabus-check="${syllabusEscape(id)}" ${checked ? "checked" : ""}>
+                <span>${syllabusEscape(sub)}</span>
+              </label>`;
+            }).join("")}
+          </div>
+        </section>`;
+      }).join("") : '<div class="card syllabus-empty">No scheduled topics were found for this subject yet.</div>'}
+    </div>`;
+
+  $("syllabus-back").addEventListener("click", () => {
+    activeSyllabusSubject = null;
+    renderSyllabus();
+  });
+  main.querySelectorAll("[data-syllabus-check]").forEach(input => {
+    input.addEventListener("change", () => {
+      const current = loadSyllabusChecks();
+      current[input.dataset.syllabusCheck] = input.checked;
+      saveSyllabusChecks(current);
+      renderSyllabus();
+    });
+  });
+}
+
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{
   activePage=b.dataset.page;
   document.querySelectorAll(".nav button").forEach(n=>n.classList.toggle("active",n===b));
-  if(activePage==="home")renderHome();else renderCalendar(activePage);
+  if(activePage==="home")renderHome();
+  else if(activePage==="syllabus")renderSyllabus();
+  else renderCalendar(activePage);
 }));
-function refreshPage(){if(activePage==="home")renderHome();else renderCalendar(activePage);}
+function refreshPage(){
+  if(activePage==="home")renderHome();
+  else if(activePage==="syllabus")renderSyllabus();
+  else renderCalendar(activePage);
+}
 renderHome();
 </script>
 
@@ -1475,6 +1674,149 @@ renderHome();
     SUPABASE_PUBLISHABLE_KEY
   );
 
+  // PLANNER_CLOUD_SYNC_PATCH_V1
+  // Sync the planner's existing localStorage data to the signed-in user.
+  const PLANNER_KEYS = [
+    "academicCalendarEvents_v1",
+    "dailyPlannerTasks_v1",
+    "dailyPlannerCustomColors_v1",
+    "homeDueTodayChecks"
+  ];
+
+  let cloudSyncReady = false;
+  let cloudSyncUserId = null;
+  let cloudSyncTimer = null;
+  let cloudSaveQueue = Promise.resolve();
+  let applyingCloudData = false;
+
+  function readPlannerSnapshot() {
+    const snapshot = {};
+    for (const key of PLANNER_KEYS) {
+      const value = localStorage.getItem(key);
+      if (value !== null) snapshot[key] = value;
+    }
+    return snapshot;
+  }
+
+  function applyPlannerSnapshot(snapshot) {
+    applyingCloudData = true;
+    try {
+      for (const key of PLANNER_KEYS) {
+        // Do not delete local data just because a cloud key is absent.
+        if (Object.prototype.hasOwnProperty.call(snapshot, key)) {
+          localStorage.setItem(key, snapshot[key]);
+        }
+      }
+    } finally {
+      applyingCloudData = false;
+    }
+  }
+
+  async function writePlannerSnapshot(userId, snapshot) {
+    const { error } = await client
+      .from("user_planner_data")
+      .upsert({
+        user_id: userId,
+        data: snapshot,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id" });
+
+    if (error) throw error;
+  }
+
+  function schedulePlannerCloudSave() {
+    if (!cloudSyncReady || applyingCloudData || !cloudSyncUserId) return;
+
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => {
+      const userId = cloudSyncUserId;
+      const snapshot = readPlannerSnapshot();
+
+      cloudSaveQueue = cloudSaveQueue
+        .catch(() => {})
+        .then(async () => {
+          if (!cloudSyncReady || cloudSyncUserId !== userId) return;
+          await writePlannerSnapshot(userId, snapshot);
+          if (cloudSyncUserId === userId) {
+            setStatus("Planner changes saved to your account.");
+          }
+        })
+        .catch(error => {
+          console.error("Planner cloud save failed:", error);
+          setStatus(
+            "Cloud save failed. Your browser copy is still saved. " +
+            (error.message || ""),
+            true
+          );
+        });
+    }, 800);
+  }
+
+  // Keep existing planner features intact; watch only the known data keys.
+  const originalStorageSetItem = Storage.prototype.setItem;
+  Storage.prototype.setItem = function(key, value) {
+    originalStorageSetItem.call(this, key, value);
+    if (
+      this === window.localStorage &&
+      PLANNER_KEYS.includes(String(key))
+    ) {
+      schedulePlannerCloudSave();
+    }
+  };
+
+  async function initializePlannerCloudSync(user) {
+    cloudSyncReady = false;
+    cloudSyncUserId = user?.id || null;
+    clearTimeout(cloudSyncTimer);
+    if (!user) return;
+
+    setStatus("Loading your planner data…");
+
+    try {
+      const { data: row, error } = await client
+        .from("user_planner_data")
+        .select("data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const localSnapshot = readPlannerSnapshot();
+      let finalSnapshot;
+
+      if (row && row.data && typeof row.data === "object") {
+        // Cloud values win when present; local-only keys are retained.
+        finalSnapshot = { ...localSnapshot, ...row.data };
+        applyPlannerSnapshot(finalSnapshot);
+
+        // Refresh the visible calendar after loading cloud data.
+        if (typeof window.refreshPage === "function") {
+          window.refreshPage();
+        }
+
+        // Persist the merged snapshot so any local-only keys are uploaded too.
+        await writePlannerSnapshot(user.id, finalSnapshot);
+      } else {
+        // First sign-in: preserve and upload existing browser data.
+        finalSnapshot = localSnapshot;
+        await writePlannerSnapshot(user.id, finalSnapshot);
+      }
+
+      if (cloudSyncUserId !== user.id) return;
+      cloudSyncReady = true;
+      setStatus("Your planner is synced to your account.");
+    } catch (error) {
+      cloudSyncReady = false;
+      console.error("Planner cloud sync setup failed:", error);
+      setStatus(
+        "Cloud sync unavailable. Your local data remains saved. " +
+        (error.message || ""),
+        true
+      );
+    }
+  }
+
+
   trigger.addEventListener("click", async () => {
     if (busy) return;
 
@@ -1540,8 +1882,17 @@ renderHome();
   });
 
   client.auth.onAuthStateChange((_event, session) => {
-    renderUser(session?.user || null);
-    if (session?.user) setStatus("");
+    const user = session?.user || null;
+    renderUser(user);
+    if (user) {
+      // Defer database calls until the auth callback has returned.
+      setTimeout(() => initializePlannerCloudSync(user), 0);
+    } else {
+      cloudSyncReady = false;
+      cloudSyncUserId = null;
+      clearTimeout(cloudSyncTimer);
+      setStatus("");
+    }
   });
 
   client.auth.getSession().then(({ data, error }) => {
@@ -1550,7 +1901,9 @@ renderHome();
       setStatus("Could not check sign-in: " + error.message, true);
       return;
     }
-    renderUser(data.session?.user || null);
+    const user = data.session?.user || null;
+    renderUser(user);
+    if (user) initializePlannerCloudSync(user);
   }).catch((error) => {
     openMenu();
     setStatus(error.message || "Could not check sign-in.", true);
