@@ -1404,6 +1404,94 @@ body,
 }
 </style>
 
+
+/* MOBILE_CALENDAR_FIT_VIEWPORT_V1 */
+@media (max-width: 700px) {
+  .card:has(.calendar-grid) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    padding: 6px !important;
+  }
+
+  .calendar-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    box-sizing: border-box !important;
+  }
+
+  .day-name {
+    min-width: 0 !important;
+    font-size: 8px !important;
+    padding: 4px 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .day {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 68px !important;
+    min-height: 0 !important;
+    padding: 2px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    border-radius: 4px !important;
+  }
+
+  .day-number {
+    font-size: 10px !important;
+  }
+
+  .day-top {
+    min-width: 0 !important;
+    gap: 0 !important;
+  }
+
+  .day-events {
+    min-width: 0 !important;
+    gap: 2px !important;
+    margin-top: 3px !important;
+  }
+
+  .event-chip {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    gap: 2px !important;
+    padding: 1px !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+    overflow: hidden !important;
+  }
+
+  .event-dot {
+    flex: 0 0 3px !important;
+    width: 3px !important;
+    height: 3px !important;
+  }
+
+  .event-title {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .day-count {
+    display: none !important;
+  }
+
+  .more-events {
+    font-size: 7px !important;
+    padding-left: 3px !important;
+  }
+}
+
 </head>
 <body>
 <div class="app">
