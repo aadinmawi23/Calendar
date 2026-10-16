@@ -570,6 +570,705 @@ html, body { height:auto; min-height:100%; overflow-y:auto; }
 
 /* Hide descriptive text beneath page headings */
 .page-subtitle { display: none !important; }
+
+/* RESPONSIVE_COLLAPSIBLE_SIDEBAR_V1 */
+
+/* Desktop: retain the original vertical sidebar and provide a centred toggle. */
+.sidebar {
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  width: 245px !important;
+  min-width: 245px !important;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: transform .22s ease;
+  z-index: 25;
+}
+.main {
+  margin-left: 245px;
+  min-width: 0;
+  transition: margin-left .22s ease;
+}
+#sidebar-collapse-toggle {
+  position: fixed;
+  z-index: 35;
+  left: 245px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 2px 9px rgba(50,40,30,.12);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: left .22s ease, transform .22s ease, box-shadow .18s ease;
+}
+#sidebar-collapse-toggle:hover {
+  box-shadow: 0 3px 12px rgba(50,40,30,.18);
+}
+body.sidebar-collapsed .sidebar {
+  transform: translateX(-100%);
+}
+body.sidebar-collapsed .main {
+  margin-left: 0 !important;
+}
+body.sidebar-collapsed #sidebar-collapse-toggle {
+  left: 0;
+  transform: translateY(-50%);
+  border-radius: 0 9px 9px 0;
+}
+
+/* Keep the calendar's seven columns intact instead of compressing events. */
+.card:has(.calendar-grid) {
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.calendar-grid {
+  min-width: 900px;
+}
+.day {
+  height: 124px !important;
+  min-width: 0;
+}
+.day-events {
+  min-height: 0;
+}
+.event-chip {
+  height: auto !important;
+  min-height: 11px;
+  flex: 0 0 auto !important;
+  line-height: 1.2 !important;
+  font-size: 10px !important;
+}
+.event-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.more-events {
+  font-size: 9px;
+}
+
+/* Mobile: preserve the same vertical sidebar as an overlay drawer. */
+@media (max-width: 1000px) {
+  .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: 245px !important;
+    min-width: 245px !important;
+    height: 100vh;
+    height: 100dvh;
+    padding: 25px 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto;
+    box-shadow: 8px 0 28px rgba(50,40,30,.10);
+  }
+  .brand {
+    padding: 0 12px 30px !important;
+  }
+  .brand h1 {
+    font-size: 27px !important;
+  }
+  .brand p,
+  .nav-label,
+  .sidebar-bottom {
+    display: block !important;
+  }
+  .nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+  }
+  .nav button {
+    text-align: left !important;
+    padding: 13px 14px !important;
+    font-size: 14px !important;
+  }
+  .nav button.active:before {
+    display: inline-block !important;
+  }
+  .sidebar-account {
+    margin-top: auto !important;
+    padding: 14px 8px 2px !important;
+  }
+  .main {
+    margin-left: 0 !important;
+    width: 100%;
+    padding: 22px 10px 35px !important;
+  }
+  .page-head h2 {
+    font-size: 26px !important;
+  }
+  .card {
+    padding: 11px !important;
+  }
+  .calendar-head h3 {
+    font-size: 20px !important;
+  }
+  .calendar-grid {
+    min-width: 900px !important;
+    gap: 5px !important;
+  }
+  .day-name {
+    font-size: 11px !important;
+    padding: 7px 0 10px !important;
+  }
+  .day {
+    height: 124px !important;
+    padding: 6px !important;
+    border-radius: 9px !important;
+  }
+  .day-number {
+    font-size: 14px !important;
+  }
+  .day-count {
+    display: inline !important;
+  }
+  .day-events {
+    gap: 3px !important;
+    margin-top: 5px !important;
+    overflow: hidden;
+  }
+  .event-chip {
+    height: auto !important;
+    min-height: 11px;
+    gap: 4px !important;
+    flex: 0 0 auto !important;
+    font-size: 10px !important;
+  }
+  .more-events {
+    font-size: 9px !important;
+    padding-left: 10px !important;
+  }
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .main, #sidebar-collapse-toggle {
+    transition: none !important;
+  }
+}
+
+
+/* SIDEBAR_ARROW_EXACT_CENTER_V1 */
+#sidebar-collapse-toggle {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+#sidebar-collapse-toggle .sidebar-arrow-icon {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-top: 1.8px solid currentColor;
+  border-right: 1.8px solid currentColor;
+  transform: rotate(-135deg);
+  margin-left: 4px;
+}
+body.sidebar-collapsed #sidebar-collapse-toggle .sidebar-arrow-icon {
+  transform: rotate(45deg);
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+
+
+/* MAIN_PAGE_BOOK_TABS_V1 */
+.main-page-tabs {
+  margin-left: 245px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  padding-left: 42px;
+  padding-right: 42px;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  margin: 0 0 22px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.main-page-tabs::-webkit-scrollbar { display: none; }
+.main-page-tabs button {
+  flex: 0 0 auto;
+  padding: 10px 16px 11px;
+  border: 1px solid #d9cbb9;
+  border-bottom: 0;
+  border-radius: 11px 11px 0 0;
+  background: #e9dfd2;
+  color: #6b5d50;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.main-page-tabs button:hover { background: #f5ece1; }
+.main-page-tabs button.active {
+  position: relative;
+  z-index: 1;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 -2px 7px rgba(71,57,45,.04);
+}
+.main-page-tabs button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card);
+}
+
+
+@media (max-width: 1000px) {
+  .main-page-tabs {
+    margin-left: 0;
+    justify-content: flex-end;
+    padding: 14px 10px 0;
+    gap: 4px;
+  }
+  .main-page-tabs button {
+    padding: 9px 12px 10px;
+    font-size: 11px;
+  }
+}
+
+
+/* ICON_ONLY_UNIFORM_MAIN_TABS_V1 */
+.main-page-tabs {
+  justify-content: flex-end !important;
+  align-items: flex-end;
+  gap: 7px !important;
+}
+.main-page-tabs button {
+  box-sizing: border-box;
+  width: 44px !important;
+  min-width: 44px;
+  height: 42px !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9cbb9;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+}
+.main-page-tabs button svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.main-page-tabs button:first-child svg path {
+  fill: none;
+}
+.main-page-tabs button.active {
+  color: var(--accent);
+}
+@media (max-width: 1000px) {
+  .main-page-tabs {
+    justify-content: flex-end !important;
+    gap: 6px !important;
+  }
+  .main-page-tabs button {
+    width: 42px !important;
+    min-width: 42px;
+    height: 40px !important;
+  }
+}
+
+
+/* ROUNDED_BORDED_ICON_TABS_V1 */
+.main-page-tabs button {
+  border: 1px solid #d9cbb9 !important;
+  border-radius: 12px !important;
+  background: var(--card);
+  box-shadow: 0 2px 5px rgba(71,57,45,.04);
+  overflow: hidden;
+}
+.main-page-tabs button:hover {
+  border-color: #bfae9d !important;
+  background: #f8f0e6;
+}
+.main-page-tabs button.active {
+  border: 1px solid var(--accent) !important;
+  border-radius: 12px !important;
+  background: var(--card);
+  box-shadow: 0 3px 8px rgba(71,57,45,.09);
+}
+.main-page-tabs button.active::after {
+  display: none !important;
+}
+
+
+
+/* ICON_SIZE_AND_PAGE_LIFT_V1 */
+.main-page-tabs button {
+  transform: translateY(5px) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+}
+.main-page-tabs button svg {
+  width: 17px !important;
+  height: 17px !important;
+  color: var(--accent) !important;
+  stroke: currentColor !important;
+}
+.main-page-tabs button:hover,
+.main-page-tabs button.active {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+}
+.main-page-tabs button.active::after {
+  display: none !important;
+}
+.main-page-tabs {
+  margin-top: -5px !important;
+  margin-bottom: -3px !important;
+}
+main.main {
+  padding-top: 8px;
+}
+@media (max-width: 700px) {
+  .main-page-tabs button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  main.main {
+    padding-top: 6px;
+  }
+}
+/* END_ICON_SIZE_AND_PAGE_LIFT_V1 */
+
+
+
+/* ACTIVE_PAGE_ICON_HIGHLIGHT_V2 */
+.main-page-tabs button {
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+  transition: background .18s ease, border-color .18s ease;
+}
+.main-page-tabs button.active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 2px 6px rgba(60, 45, 30, .07) !important;
+  opacity: 1 !important;
+}
+.main-page-tabs button.active svg {
+  stroke: currentColor !important;
+  stroke-width: 2.3px !important;
+}
+.main-page-tabs button:not(.active) {
+  opacity: .72;
+  box-shadow: none !important;
+}
+.main-page-tabs button:not(.active):hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 7%, var(--card)) !important;
+}
+.main-page-tabs button.active::after {
+  display: none !important;
+}
+/* END_ACTIVE_PAGE_ICON_HIGHLIGHT_V2 */
+
+
+
+/* ICON_ONLY_ACTIVE_HIGHLIGHT_V1 */
+.main-page-tabs button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+  opacity: .55;
+}
+.main-page-tabs button svg {
+  stroke: currentColor !important;
+  transition: opacity .18s ease, stroke-width .18s ease;
+}
+.main-page-tabs button.active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+  opacity: 1 !important;
+}
+.main-page-tabs button.active svg {
+  stroke: var(--accent) !important;
+  stroke-width: 2.6px !important;
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--accent) 25%, transparent));
+}
+.main-page-tabs button:not(.active):hover {
+  opacity: .85;
+  background: transparent !important;
+}
+/* END_ICON_ONLY_ACTIVE_HIGHLIGHT_V1 */
+
+
+
+/* WHITE_ACTIVE_ICON_HIDE_ADD_EVENT_V1 */
+.main-page-tabs button,
+.main-page-tabs button:hover,
+.main-page-tabs button.active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.main-page-tabs button.active {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.main-page-tabs button.active svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+}
+.main-page-tabs button:not(.active) {
+  opacity: .58;
+}
+.main-page-tabs button:not(.active):hover {
+  opacity: .85;
+}
+.main-page-tabs {
+  margin-top: -7px !important;
+  margin-bottom: -4px !important;
+}
+main.main {
+  padding-top: 4px !important;
+}
+/* END_WHITE_ACTIVE_ICON_HIDE_ADD_EVENT_V1 */
+
+
+
+/* BROWN_ACTIVE_ICON_UNDERLINE_V1 */
+.main-page-tabs button,
+.main-page-tabs button:hover,
+.main-page-tabs button.active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  position: relative;
+}
+
+.main-page-tabs button {
+  color: #9b9186 !important;
+  opacity: 1 !important;
+}
+
+.main-page-tabs button svg {
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
+.main-page-tabs button.active {
+  color: #79583f !important;
+}
+
+.main-page-tabs button.active svg {
+  stroke: #79583f !important;
+  stroke-width: 2.4px !important;
+}
+
+.main-page-tabs button.active::after {
+  content: "";
+  display: block !important;
+  position: absolute;
+  height: 3px;
+  width: 20px;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
+  border-radius: 3px;
+  background: #79583f;
+}
+
+.main-page-tabs button:not(.active)::after {
+  display: none !important;
+}
+/* END_BROWN_ACTIVE_ICON_UNDERLINE_V1 */
+
+
+
+/* UNIFORM_MAIN_ICON_ALIGNMENT_V1 */
+.main-page-tabs {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.main-page-tabs button {
+  box-sizing: border-box !important;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  line-height: 1 !important;
+}
+
+.main-page-tabs button svg {
+  display: block !important;
+  flex: 0 0 17px !important;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+}
+
+.main-page-tabs button.active::after {
+  left: 50% !important;
+  bottom: 2px !important;
+  transform: translateX(-50%) !important;
+  width: 20px !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .main-page-tabs {
+    gap: 6px !important;
+  }
+  .main-page-tabs button {
+    flex-basis: 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+}
+/* END_UNIFORM_MAIN_ICON_ALIGNMENT_V1 */
+
+
+
+/* STABLE_ICON_POSITION_NO_SCROLL_SHIFT_V1 */
+html {
+  scrollbar-gutter: stable;
+}
+
+.main-page-tabs {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
+}
+
+.main-page-tabs button {
+  flex: 0 0 44px !important;
+}
+
+@media (max-width: 700px) {
+  .main-page-tabs button {
+    flex-basis: 40px !important;
+  }
+}
+/* END_STABLE_ICON_POSITION_NO_SCROLL_SHIFT_V1 */
+
+
+
+/* HIDE_SCROLLBAR_KEEP_SCROLLING_V1 */
+html {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  scrollbar-gutter: stable;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+body,
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+/* END_HIDE_SCROLLBAR_KEEP_SCROLLING_V1 */
+
+
+
+/* CLOSER_ICONS_SUBTLE_HOVER_V1 */
+.main-page-tabs {
+  gap: 3px !important;
+}
+
+.main-page-tabs button {
+  transition:
+    color .18s ease,
+    opacity .18s ease,
+    transform .18s ease,
+    background-color .18s ease !important;
+  border-radius: 9px !important;
+}
+
+.main-page-tabs button:not(.active):hover {
+  background: rgba(121, 88, 63, .07) !important;
+  opacity: 1 !important;
+  transform: translateY(-2px) !important;
+}
+
+.main-page-tabs button.active:hover {
+  background: transparent !important;
+  transform: translateY(-1px) !important;
+}
+
+.main-page-tabs button:hover svg {
+  transform: scale(1.06);
+}
+
+.main-page-tabs button svg {
+  transition: transform .18s ease !important;
+}
+
+@media (max-width: 700px) {
+  .main-page-tabs {
+    gap: 2px !important;
+  }
+}
+/* END_CLOSER_ICONS_SUBTLE_HOVER_V1 */
+
 </style>
 
 </head>
@@ -619,6 +1318,12 @@ html, body { height:auto; min-height:100%; overflow-y:auto; }
     </section>
   </div>
 </aside>
+<nav class="main-page-tabs" aria-label="Main page navigation">
+  <button type="button" data-main-page="home" class="active" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg></button>
+  <button type="button" data-main-page="academic" aria-label="Academic Calendar" title="Academic Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h2M14 14h2M8 17h2"/></svg></button>
+  <button type="button" data-main-page="personal" aria-label="Personal Calendar" title="Personal Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><circle cx="12" cy="15" r="2.5"/></svg></button>
+  <button type="button" data-main-page="syllabus" aria-label="Syllabus" title="Syllabus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 4.5v16M8 6h8M8 10h8M8 14h5"/></svg></button>
+</nav>
 <main class="main" id="main"></main>
 </div>
 <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -934,7 +1639,22 @@ function renderCalendar(page){
   });
 }
 
-function renderDailyPlanner(date,page="academic"){
+function renderDailyPlanner(date,page="academic",options={}){
+  window.__dailyPlannerReturnPage = page;
+  if (!options.fromHistory) {
+    const currentState = history.state || {};
+    history.pushState(
+      {
+        ...currentState,
+        plannerPage: page,
+        plannerView: "daily",
+        dailyDate: date,
+        returnToCalendar: page
+      },
+      "",
+      location.href
+    );
+  }
   const main=$("main");
   const storageKey="dailyPlannerTasks_v1";
   let allTasks={};
@@ -966,7 +1686,25 @@ function renderDailyPlanner(date,page="academic"){
       </div>
     </section>`;
 
-  $("daily-back").onclick=()=>renderCalendar(page);
+  $("daily-back").onclick=()=>{
+    const state = history.state || {};
+    const returnPage = state.returnToCalendar || page;
+
+    if (state.plannerView === "daily") {
+      history.back();
+
+      // Fallback if the previous history entry does not restore the calendar.
+      setTimeout(() => {
+        if (history.state && history.state.plannerView === "daily") {
+          showPlannerPage(returnPage);
+          renderCalendar(returnPage);
+        }
+      }, 250);
+    } else {
+      showPlannerPage(returnPage);
+      renderCalendar(returnPage);
+    }
+  };
   $("daily-add").onclick=()=>{
     const title=prompt("Task name:");
     if(!title||!title.trim())return;
@@ -1468,36 +2206,96 @@ function saveSyllabusChecks(checks) {
   localStorage.setItem(SYLLABUS_STORAGE_KEY, JSON.stringify(checks));
 }
 
+/* SYLLABUS_SOURCE_MAPPING_V2
+   Source: user-supplied SSC CGL Preparation Syllabus.
+   This mapping is independent of importedEvents.
+*/
+const SYLLABUS_SOURCE_DATA = {
+  "General Studies": [
+    ["Indian History — Ancient India", "Harappan / Indus Civilization; Vedic Culture; Mahajanapada Period; Religious Movements; Maurya Period; Post-Maurya / Pre-Gupta Period; Sangam Period; Gupta Period; Post-Gupta Period / Vardhana Dynasty"],
+    ["Indian History — Medieval India", "Early Medieval Period: North India (Rajput period); Early Medieval Period: South India (Cholas and other kingdoms); Delhi Sultanate; Vijayanagar and other kingdoms; Bhakti Movement; Sufi Movement; Mughal Period; Maratha State and Maratha Confederacy; Advent of the Europeans"],
+    ["Indian History — Modern India", "Expansion of British Power: Bengal, Mysore and Punjab; Economic Impact of British Rule; Socio-Religious Movements in the 19th–20th centuries; Revolt of 1857; Moderate Phase; Extremist Phase; Gandhian Era"],
+    ["Indian History — Miscellaneous", "Important dates and places; Foreign travellers / envoys; Abbreviated or alternative names; Battles; Reforms and Acts; Committees / commissions; Congress sessions; Governor-Generals and Viceroys"],
+    ["World History — Ancient World", "Mesopotamian civilization; Egyptian civilization; Harappan civilization; Chinese civilization; Iranian civilization; Greek civilization; Roman civilization; Seven Wonders of the Ancient World"],
+    ["World History — Medieval World", "Medieval Europe: feudalism and Crusades; Arab civilization; Medieval China; Medieval Japan; Seven Wonders of the Medieval World"],
+    ["World History — Modern World", "Renaissance; Reformation; Geographical discoveries; Glorious Revolution; Industrial Revolution; American Revolution; French Revolution; Unification of Italy and Germany; First World War; Russian Revolution; Chinese Revolution; Turkish Revolution; World Depression (1929–34); Fascism in Italy; Nazism in Germany; Militarism in Japan; Second World War"],
+    ["World History — Miscellaneous", "Important dates; Association of places; Abbreviated or alternative names; Important battles"],
+    ["Geography — Physical", "Solar System; Continents and oceans; Biosphere, lithosphere, hydrosphere and atmosphere; Latitudes and longitudes; Heat zones; Time zones and International Date Line; Earth's motions and tilted axis; Atmospheric composition and layers; Weather and climate; Atmospheric pressure; Earth's internal structure; Rocks; Earthquakes and volcanoes"],
+    ["Geography — Landforms", "Mountains, plateaus, plains and grasslands; Landforms formed by rivers; Landforms formed by glaciers; Landforms formed by wind; Landforms formed by groundwater"],
+    ["Geography — India and South Asia", "Indian subcontinent: position, extent and physical features; Climatic diversity; Soil resources; Agriculture; Land-use patterns; Water resources and utilization; Multipurpose river-valley projects; Transport in India; States and capitals; Population facts; Wildlife sanctuaries and national parks; Irrigation and power projects; Indian satellites"],
+    ["Geography — World and Map-based GK", "Asia; Countries with capitals and currencies; River-side cities; Wonders of the world; Countries and major products / industries; Industrial towns; Famous sites in India and the world; Changed place names; Continental area and highest / lowest points; Deepest oceans; Highest mountain peaks; Geographical epithets; Boundary lines; Tribes and homelands; Glossary"],
+    ["Indian Polity and Constitution", "Evolution and making of the Constitution; Constituent Assembly; Sources of the Constitution; Important Articles and Amendments; Features of the Constitution; Federal and unitary features; Preamble; Lapse of paramountcy; Integration of Indian States; Union and its territories; State reorganization; Citizenship; Fundamental Rights; Directive Principles; Fundamental Duties; Amendment procedure; Union and State executives; Parliament; Supreme Court and High Courts; Panchayats and Municipalities; Special position of Jammu and Kashmir; Inter-State Council and relations; Finance Commission; Planning Commission; National Development Council; National Integration Council; Emergency provisions; Public Service Commissions; Elections; Delimitation Commission; Official languages; National symbols; Constitutional terminology"],
+    ["Indian Economy", "Characteristics of the Indian economy; Agriculture and land development; National income; Planning; Unemployment; Trade and commerce; New Economic Policy; Financial system; Fiscal system; Banking; Taxation; Industry; Foreign trade; Economic and financial terminology; Miscellaneous facts"],
+    ["Physics", "Units and measurement; Motion; Work, energy and power; Gravitation; Pressure; Flotation; Surface tension; Viscosity; Elasticity; Simple harmonic motion; Waves and sound; Heat; Light; Static and current electricity; Magnetism; Atomic and nuclear physics; Electronics; Scientific instruments; Inventions and discoveries; Units of weight; Unit conversions"],
+    ["Chemistry", "Substances and their nature; Atomic structure; Periodic classification; Chemical bonding; Oxidation and reduction; Acids, bases and salts; Behaviour of gases; Electrolysis; Carbon and its compounds; Fuels; Metallurgy; Important facts about metals; Non-metals; Common facts"],
+    ["Biology — General", "Introduction; Classification of organisms; Cytology; Genetics; Organic evolution"],
+    ["Biology — Botany", "Plant kingdom classification; Plant morphology; Plant tissues; Photosynthesis; Plant hormones; Plant diseases; Ecology; Pollution"],
+    ["Biology — Zoology and Human Biology", "Animal kingdom classification; Animal tissues; Human blood; Systems of the human body; Nutrients; Human diseases; Miscellaneous biology"],
+    ["Static GK — Facts and Institutions", "Firsts in India (male and female); Firsts in the world; Superlatives; Monuments; National emblems and animals; International boundaries; News agencies; Political parties; Intelligence agencies; Parliaments; Signs and symbols; Official books; Newspapers; UNO; World organizations; International decades, years and weeks; SAARC years; National and international days"],
+    ["Static GK — Culture, Places and People", "India's World Heritage Sites; Famous tourist spots; Defence and internal security; Defence training institutions; State foundation days; Research centres; Nuclear, space, health and medicinal research centres; Defence institutes; Government industrial undertakings; Musical instruments and exponents; State folk dances; Places associated with eminent people; Crematoriums of famous people; Nicknames; Works associated with famous people"],
+    ["Static GK — Awards and Sports", "Awards and honours; National and gallantry awards; Jnanpith Awards; Dadasaheb Phalke Award; Books and authors; Olympic Games; Commonwealth Games; Asian Games; SAF and Afro-Asian Games; Sports information; Cricket and World Cups; Football; Hockey; Tennis; Cups and trophies; Famous stadiums; National games and sports; Playing areas and number of players"],
+    ["Computer Awareness", "Introduction; Generations of computers; Important computer facts; Hardware; Software; Glossary; Computer-related abbreviations"],
+    ["General Awareness — Ongoing coverage", "Current affairs; Culture; General policy; Scientific research"]
+  ],
+
+  "Maths": [
+    ["Number System", "Whole numbers; Decimals; Fractions; Relationships between numbers"],
+    ["Percentage and Ratio", "Percentage; Ratio and proportion; Square roots"],
+    ["Average and Interest", "Averages; Simple interest; Compound interest"],
+    ["Commercial Mathematics", "Profit and loss; Discount; Partnership business"],
+    ["Mixture", "Mixture and alligation"],
+    ["Work Problems", "Time and work; Pipes and related applications where relevant"],
+    ["Motion Problems", "Time, speed and distance"],
+    ["Algebra", "Basic school-algebra identities; Elementary surds; Graphs of linear equations"],
+    ["Geometry — Triangles", "Triangles and their various centres; Congruence of triangles; Similarity of triangles"],
+    ["Geometry — Circles", "Chords; Tangents; Angles subtended by chords; Common tangents to two or more circles"],
+    ["Plane Mensuration", "Triangle; Quadrilaterals; Regular polygons; Circle"],
+    ["Solid Mensuration", "Right prism; Right circular cone; Right circular cylinder; Sphere; Hemisphere; Rectangular parallelepiped / cuboid; Regular right pyramid with triangular or square base"],
+    ["Trigonometry", "Trigonometric ratios; Degree and radian measures; Standard identities; Complementary angles; Heights and distances"],
+    ["Data Interpretation / Graphical Information", "Histogram; Frequency polygon; Bar diagram; Pie chart"],
+    ["Tier 2 — Statistics and Probability", "Mean; Median; Mode; Standard deviation; Simple probability"]
+  ],
+
+  "Reasoning": [
+    ["Analogy", "Semantic / verbal analogy; Symbolic or number analogy; Figural analogy"],
+    ["Classification", "Semantic classification; Symbolic / number classification; Figural classification"],
+    ["Series and Trends", "Semantic series; Number series; Figural series; Arithmetic patterns; Trend identification"],
+    ["Problem Solving and Analysis", "Problem solving; Analysis; Judgment; Decision-making"],
+    ["Coding-Decoding", "Letter coding; Small / capital letter patterns; Number coding; Coding and decoding"],
+    ["Numerical and Symbolic Operations", "Numerical operations; Symbolic operations"],
+    ["Spatial Ability", "Space orientation; Space visualization"],
+    ["Venn Diagrams", "Set relationships represented through Venn diagrams"],
+    ["Inference and Syllogistic Reasoning", "Drawing inferences; Statement-conclusion; Syllogisms"],
+    ["Pattern-Based Reasoning", "Punched holes; Pattern folding and unfolding; Pattern completion"],
+    ["Embedded Figures", "Identification of embedded or hidden figures"],
+    ["Matching and Observation", "Address matching; Date and city matching; Centre-code / roll-number classification; Visual memory; Visual discrimination; Indexing"],
+    ["Word Building", "Word formation and building"],
+    ["Critical Thinking", "Critical thinking; Analytical reasoning"],
+    ["Emotional Intelligence", "Emotional-intelligence concepts; Applied judgment"],
+    ["Social Intelligence", "Social intelligence; Relationship / social-situation concepts"]
+  ],
+
+  "English": [
+    ["Grammar", "Tenses; Subject–verb agreement; Articles; Prepositions; Parts of speech"],
+    ["Error Detection", "Spotting grammatical and usage errors"],
+    ["Sentence Correction / Improvement", "Sentence improvement; Sentence correction"],
+    ["Vocabulary", "Synonyms; Antonyms; Contextual vocabulary"],
+    ["Word Usage", "One-word substitution; Idioms and phrases"],
+    ["Spelling", "Correct spelling; Identification of misspelt words"],
+    ["Voice", "Active voice; Passive voice"],
+    ["Narration", "Direct speech; Indirect speech"],
+    ["Completion", "Fill in the blanks; Cloze tests"],
+    ["Reading Comprehension", "Comprehension passages; Inference-based questions"]
+  ]
+};
+
 function getSyllabusTree(subject) {
-  const rows = (Array.isArray(importedEvents) ? importedEvents : [])
-    .filter(e => e.subject === subject && String(e.title || "").trim());
-  const topics = new Map();
-
-  for (const event of rows) {
-    const title = String(event.title || "").trim();
-    const colon = title.indexOf(":");
-    let topic, subtopic;
-    if (colon > 0) {
-      topic = title.slice(0, colon).trim();
-      subtopic = title.slice(colon + 1).trim();
-    } else {
-      topic = "Topics";
-      subtopic = title;
-    }
-    if (!topic) topic = "Topics";
-    if (!subtopic) subtopic = title;
-    if (!topics.has(topic)) topics.set(topic, new Set());
-    topics.get(topic).add(subtopic);
-  }
-
-  return [...topics.entries()]
-    .sort((a,b) => a[0].localeCompare(b[0]))
-    .map(([topic, subs]) => ({
-      topic,
-      subtopics: [...subs].sort((a,b) => a.localeCompare(b))
-    }));
+  const rows = SYLLABUS_SOURCE_DATA[subject] || [];
+  return rows.map(([topic, coverage]) => ({
+    topic,
+    subtopics: coverage.split(";").map(item => item.trim()).filter(Boolean)
+  }));
 }
-
 function renderSyllabus() {
   const main = $("main");
   if (!main) return;
@@ -1526,7 +2324,13 @@ function renderSyllabus() {
       </div>`;
     main.querySelectorAll("[data-syllabus-subject]").forEach(button => {
       button.addEventListener("click", () => {
-        activeSyllabusSubject = button.dataset.syllabusSubject;
+        const subject = button.dataset.syllabusSubject;
+        history.pushState(
+          { ...(history.state || {}), plannerPage: "syllabus", syllabusSubject: subject },
+          "",
+          location.href
+        );
+        activeSyllabusSubject = subject;
         renderSyllabus();
       });
     });
@@ -1570,8 +2374,14 @@ function renderSyllabus() {
     </div>`;
 
   $("syllabus-back").addEventListener("click", () => {
-    activeSyllabusSubject = null;
-    renderSyllabus();
+    if (history.state &&
+        history.state.plannerPage === "syllabus" &&
+        history.state.syllabusSubject) {
+      history.back();
+    } else {
+      activeSyllabusSubject = null;
+      renderSyllabus();
+    }
   });
   main.querySelectorAll("[data-syllabus-check]").forEach(input => {
     input.addEventListener("change", () => {
@@ -1591,26 +2401,59 @@ function showPlannerPage(page) {
   document.querySelectorAll(".nav button").forEach(n =>
     n.classList.toggle("active", n.dataset.page === activePage)
   );
+  document.querySelectorAll("[data-main-page]").forEach(n =>
+    n.classList.toggle("active", n.dataset.mainPage === activePage)
+  );
 
   if (activePage === "home") renderHome();
   else if (activePage === "syllabus") renderSyllabus();
   else renderCalendar(activePage);
 }
 
-document.querySelectorAll(".nav button").forEach(b =>
+document.querySelectorAll(".nav button, [data-main-page]").forEach(b =>
   b.addEventListener("click", () => {
-    const page = b.dataset.page;
+    const page = b.dataset.page || b.dataset.mainPage;
     if (page === activePage) return;
     history.pushState({ plannerPage: page }, "", location.href);
     showPlannerPage(page);
   })
 );
 
-window.addEventListener("popstate", event => {
-  showPlannerPage(event.state?.plannerPage || "home");
-});
 
-history.replaceState({ plannerPage: "home" }, "", location.href);
+// NATIVE_PLANNER_HISTORY_V3
+(function () {
+  const validPages = ["home", "academic", "personal", "syllabus"];
+
+  if (!history.state || !validPages.includes(history.state.plannerPage)) {
+    history.replaceState(
+      { ...(history.state || {}), plannerPage: "home" },
+      "",
+      location.href
+    );
+  }
+
+  window.addEventListener("popstate", function (event) {
+    const state = event.state || {};
+    const page = state.plannerPage;
+    const wasDailyPlanner = !!document.querySelector(".daily-planner-head");
+
+    // Back from Daily Planner must restore its originating calendar,
+    // even if the previous browser entry incorrectly points to Home.
+    if (wasDailyPlanner && state.plannerView !== "daily") {
+      const returnPage = window.__dailyPlannerReturnPage || "academic";
+      showPlannerPage(returnPage);
+      return;
+    }
+
+    if (!validPages.includes(page)) return;
+
+    showPlannerPage(page);
+
+    if (state.plannerView === "daily" && state.dailyDate) {
+      renderDailyPlanner(state.dailyDate, page, { fromHistory: true });
+    }
+  });
+})();
 
 function refreshPage() {
   if (activePage === "home") renderHome();
@@ -1970,6 +2813,106 @@ renderHome();
     setStatus(error.message || "Could not check sign-in.", true);
   });
 })();
+</script>
+
+
+<button type="button" id="sidebar-collapse-toggle"
+  aria-label="Collapse sidebar" aria-expanded="true"
+  title="Collapse or expand sidebar"><span class="sidebar-arrow-icon" aria-hidden="true"></span></button>
+
+<script>
+/* RESPONSIVE_COLLAPSIBLE_SIDEBAR_V1 */
+(() => {
+  const toggle = document.getElementById("sidebar-collapse-toggle");
+  const sidebar = document.querySelector(".sidebar");
+  if (!toggle || !sidebar) return;
+
+  const mobile = window.matchMedia("(max-width: 1000px)");
+
+  function setCollapsed(collapsed) {
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute(
+      "aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar"
+    );
+    toggle.title = collapsed ? "Expand sidebar" : "Collapse sidebar";
+    toggle.innerHTML = '<span class="sidebar-arrow-icon" aria-hidden="true"></span>';
+  }
+
+  // On phones, start with the drawer closed so the calendar has room.
+  setCollapsed(mobile.matches);
+
+  toggle.addEventListener("click", () => {
+    setCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+  });
+
+  mobile.addEventListener("change", event => setCollapsed(event.matches));
+
+  // A leftward swipe on the sidebar closes it on touch screens.
+  let startX = 0;
+  let startY = 0;
+
+  sidebar.addEventListener("touchstart", event => {
+    if (!event.changedTouches.length) return;
+    startX = event.changedTouches[0].clientX;
+    startY = event.changedTouches[0].clientY;
+  }, { passive: true });
+
+  sidebar.addEventListener("touchend", event => {
+    if (!mobile.matches || !event.changedTouches.length) return;
+    const dx = event.changedTouches[0].clientX - startX;
+    const dy = event.changedTouches[0].clientY - startY;
+    if (dx < -65 && Math.abs(dx) > Math.abs(dy)) setCollapsed(true);
+  }, { passive: true });
+})();
+</script>
+
+
+<script>
+/* HIDE_RIGHT_SIDE_ADD_EVENT_BUTTONS_V1 */
+(function () {
+  function hideAddEventButtons() {
+    document.querySelectorAll('button, a, [role="button"]').forEach(function (el) {
+      if (el.closest('.main-page-tabs, .sidebar, nav')) return;
+      const label = (el.innerText || el.getAttribute('aria-label') || el.title || '')
+        .replace(/[+＋]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+
+      if (/^add\s+event(?:\s*[+＋])?$/.test(label)) {
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideAddEventButtons);
+  } else {
+    hideAddEventButtons();
+  }
+
+  const observer = new MutationObserver(hideAddEventButtons);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
+
+
+
+
+
+
+
+<script>
+/* SYLLABUS_NESTED_BROWSER_HISTORY_V1 */
+window.addEventListener("popstate", function (event) {
+  const state = event.state || {};
+  if (state.plannerPage === "syllabus") {
+    activeSyllabusSubject =
+      typeof state.syllabusSubject === "string" ? state.syllabusSubject : null;
+    renderSyllabus();
+  }
+});
 </script>
 
 </body>
