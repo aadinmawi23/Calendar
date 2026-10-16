@@ -1583,16 +1583,38 @@ function renderSyllabus() {
   });
 }
 
-document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{
-  activePage=b.dataset.page;
-  document.querySelectorAll(".nav button").forEach(n=>n.classList.toggle("active",n===b));
-  if(activePage==="home")renderHome();
-  else if(activePage==="syllabus")renderSyllabus();
+function showPlannerPage(page) {
+  const validPages = ["home", "academic", "personal", "syllabus"];
+  if (!validPages.includes(page)) page = "home";
+  activePage = page;
+
+  document.querySelectorAll(".nav button").forEach(n =>
+    n.classList.toggle("active", n.dataset.page === activePage)
+  );
+
+  if (activePage === "home") renderHome();
+  else if (activePage === "syllabus") renderSyllabus();
   else renderCalendar(activePage);
-}));
-function refreshPage(){
-  if(activePage==="home")renderHome();
-  else if(activePage==="syllabus")renderSyllabus();
+}
+
+document.querySelectorAll(".nav button").forEach(b =>
+  b.addEventListener("click", () => {
+    const page = b.dataset.page;
+    if (page === activePage) return;
+    history.pushState({ plannerPage: page }, "", location.href);
+    showPlannerPage(page);
+  })
+);
+
+window.addEventListener("popstate", event => {
+  showPlannerPage(event.state?.plannerPage || "home");
+});
+
+history.replaceState({ plannerPage: "home" }, "", location.href);
+
+function refreshPage() {
+  if (activePage === "home") renderHome();
+  else if (activePage === "syllabus") renderSyllabus();
   else renderCalendar(activePage);
 }
 renderHome();
