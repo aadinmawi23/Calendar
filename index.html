@@ -1588,8 +1588,8 @@ body,
   #planner-start-date-overlay .planner-start-date-dialog {
     width: 100% !important;
     max-width: 430px !important;
-    padding: 22px 18px !important;
-    border-radius: 16px !important;
+    padding: 28px !important;
+    border-radius: 18px !important;
   }
 }
 @media (max-height: 520px) {
@@ -1602,6 +1602,25 @@ body,
     margin: auto 0 !important;
   }
 }
+/* ACADEMIC_START_DATE_SETTINGS_MOBILE_PARITY_V1 */
+@media (max-width: 600px) {
+  #academic-start-date.planner-start-date-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 48px !important;
+    padding: 12px !important;
+    font-size: 16px !important;
+    touch-action: manipulation;
+  }
+
+  #save-academic-start-date {
+    width: 100% !important;
+    min-height: 48px !important;
+    margin-top: 12px;
+    touch-action: manipulation;
+  }
+}
+
 </style>
 
 </head>
@@ -1699,6 +1718,9 @@ const COLORS = {
 };
 const STORAGE_KEY = "academicCalendarEvents_v1";
 let events = loadEvents();
+
+// ACCOUNT_EVENT_VISIBILITY_GATE_V1
+window.plannerDataReady = false;
 
 // CALENDAR_DATE_CORRECTION_MINUS_2_DAYS_V1
 (() => {
@@ -1876,6 +1898,10 @@ document.addEventListener("wheel", e => {
 }, {passive:true});
 
 function renderCalendar(page){
+  if (!window.plannerDataReady) {
+    $("main").innerHTML = "";
+    return;
+  }
   const year=viewDate.getFullYear(), month=viewDate.getMonth();
   const head=page==="personal"?"Personal Calendar":"Academic Calendar";
 
@@ -2438,6 +2464,10 @@ function toggleHomeDueCheck(id){
 }
 
 function renderHome(){
+  if (!window.plannerDataReady) {
+    $("main").innerHTML = "";
+    return;
+  }
   const today=todayISO();
   const due=sorted(events.filter(e=>e.date===today && !e.done));
   const upcoming=sorted(events.filter(e=>e.date>today && !e.done)).slice(0,8);
@@ -3015,8 +3045,15 @@ renderHome();
   }
 
   function renderUser(user) {
+    const previousUserId = currentUser?.id || null;
     currentUser = user || null;
     const metadata = user?.user_metadata || {};
+
+    if (previousUserId !== (user?.id || null)) {
+      window.plannerDataReady = false;
+      events = [];
+      if (typeof window.refreshPage === "function") window.refreshPage();
+    }
 
     if (!user) {
       closeMenu();
@@ -3150,8 +3187,8 @@ renderHome();
     const START_KEY = "plannerAcademicStartDate_v1";
     const EVENTS_KEY = "academicCalendarEvents_v1";
 
-    // Never show onboarding unless a signed-in account is being initialized.
-    if (!userId) return;
+    // Only the currently authenticated and initializing account may open onboarding.
+    if (!userId || !currentUser || currentUser.id !== userId || cloudSyncUserId !== userId) return;
 
     // The account's date is restored from cloud before this check.
     const existingStartDate = localStorage.getItem(START_KEY);
@@ -3397,10 +3434,18 @@ renderHome();
       // Save the selected start date and shifted calendar to the account.
       await writePlannerSnapshot(user.id, readPlannerSnapshot());
 
+      if (cloudSyncUserId !== user.id || currentUser?.id !== user.id) return;
+
+      events = loadEvents();
       cloudSyncReady = true;
+      window.plannerDataReady = true;
+      if (typeof window.refreshPage === "function") window.refreshPage();
       setStatus("Your planner is synced to your account.");
     } catch (error) {
       cloudSyncReady = false;
+      window.plannerDataReady = false;
+      events = [];
+      if (typeof window.refreshPage === "function") window.refreshPage();
       console.error("Planner cloud sync setup failed:", error);
       setStatus(
         "Cloud sync unavailable. Your local data remains saved. " +
