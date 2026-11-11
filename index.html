@@ -1769,6 +1769,73 @@ function loadEvents(){
   return importedEvents.map(e => ({...e}));
 }
 function saveEvents(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(events)); }
+
+function shiftAcademicEventsToStartDate(chosenDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate || "")) {
+    throw new Error("Please select a valid academic start date.");
+  }
+
+  const academicDates = (Array.isArray(events) ? events : [])
+    .filter(event =>
+      event &&
+      event.calendar === "academic" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
+    )
+    .map(event => event.date)
+    .sort();
+
+  // Anchor the shift to the earliest actual academic event.
+  const previousStartDate = academicDates[0] || chosenDate;
+
+  const toUTC = date => {
+    const [year, month, day] = date.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+
+  const shiftDays = Math.round(
+    (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
+  );
+
+  if (shiftDays !== 0 && academicDates.length) {
+    const previousEvents = events;
+
+    const shiftedEvents = events.map(event => {
+      if (
+        !event ||
+        event.calendar !== "academic" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
+      ) {
+        return event;
+      }
+
+      const shiftedDate = new Date(
+        toUTC(event.date) + shiftDays * 86400000
+      );
+
+      return {
+        ...event,
+        date: shiftedDate.toISOString().slice(0, 10)
+      };
+    });
+
+    events = shiftedEvents;
+
+    try {
+      saveEvents();
+    } catch (error) {
+      events = previousEvents;
+      throw error;
+    }
+  }
+
+  // Save the preference only after the event update succeeds.
+  localStorage.setItem("plannerAcademicStartDate_v1", chosenDate);
+
+  const [year, month] = chosenDate.split("-").map(Number);
+  viewDate = new Date(year, month - 1, 1);
+
+  return shiftDays;
+}
 function makeId(){ return "event-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8); }
 function topicColor(title){
   const text = String(title || "Untitled topic").trim().toLowerCase();
@@ -2851,76 +2918,23 @@ function renderSettings() {
       return;
     }
 
-    const academicDates = (Array.isArray(events) ? events : [])
-      .filter(event =>
-        event &&
-        event.calendar === "academic" &&
-        /^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
-      )
-      .map(event => event.date)
-      .sort();
-
-    const previousStartDate =
-      localStorage.getItem("plannerAcademicStartDate_v1") ||
-      academicDates[0] ||
-      chosenDate;
-
-    const toUTC = date => {
-      const [year, month, day] = date.split("-").map(Number);
-      return Date.UTC(year, month - 1, day);
-    };
-
-    const shiftDays = Math.round(
-      (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
-    );
-
     try {
-      if (shiftDays !== 0 && academicDates.length) {
-        const originalEvents = events;
-
-        // Remove redundant automatic date-shift backups to free localStorage.
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("academicCalendarEvents_v1_backup_")) {
-            localStorage.removeItem(key);
-          }
-        }
-
-        events = events.map(event => {
-          if (
-            !event ||
-            event.calendar !== "academic" ||
-            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
-          ) {
-            return event;
-          }
-
-          const shifted = new Date(
-            toUTC(event.date) + shiftDays * 86400000
-          );
-
-          return {
-            ...event,
-            date: shifted.toISOString().slice(0, 10)
-          };
-        });
-
-        saveEvents();
+      if (window.plannerDataReady === false) {
+        status.textContent =
+          "Your planner is still syncing. Please try again in a moment.";
+        return;
       }
 
-      localStorage.setItem("plannerAcademicStartDate_v1", chosenDate);
-
-      const [year, month] = chosenDate.split("-").map(Number);
-      viewDate = new Date(year, month - 1, 1);
+      const shiftDays = shiftAcademicEventsToStartDate(chosenDate);
 
       status.textContent = shiftDays
-        ? `Start date saved. Academic events shifted by ${shiftDays} day(s).`
+        ? `Start date saved. All academic events shifted by ${shiftDays} day(s).`
         : "Start date saved. No event shift was needed.";
     } catch (error) {
-      events = originalEvents || events;
       console.error("Could not save academic start date:", error);
-      status.textContent = "Could not save the date. Please try again. " +
-        (error.message || "");
+      status.textContent =
+        "Could not save the date. " +
+        (error.message || "Please try again.");
     }
   });
 }
@@ -3265,64 +3279,11 @@ renderHome();
           return;
         }
 
-        const academicDates = (Array.isArray(events) ? events : [])
-          .filter(event =>
-            event &&
-            event.calendar === "academic" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
-          )
-          .map(event => event.date)
-          .sort();
-
-        const previousStartDate = academicDates[0] || chosenDate;
-
-        const toUTC = date => {
-          const [year, month, day] = date.split("-").map(Number);
-          return Date.UTC(year, month - 1, day);
-        };
-
-        const shiftDays = Math.round(
-          (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
-        );
-
         const originalEvents = events;
 
         try {
-          if (shiftDays !== 0 && academicDates.length) {
-            // Remove redundant automatic date-shift backups to free localStorage.
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-              const key = localStorage.key(i);
-              if (key && key.startsWith(EVENTS_KEY + "_backup_")) {
-                localStorage.removeItem(key);
-              }
-            }
-
-            events = events.map(event => {
-              if (
-                !event ||
-                event.calendar !== "academic" ||
-                !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
-              ) {
-                return event;
-              }
-
-              const shiftedDate = new Date(
-                toUTC(event.date) + shiftDays * 86400000
-              );
-
-              return {
-                ...event,
-                date: shiftedDate.toISOString().slice(0, 10)
-              };
-            });
-
-            saveEvents();
-          }
-
-          localStorage.setItem(START_KEY, chosenDate);
-
-          const [year, month] = chosenDate.split("-").map(Number);
-          viewDate = new Date(year, month - 1, 1);
+          const shiftDays =
+            shiftAcademicEventsToStartDate(chosenDate);
 
           overlay.remove();
           showPlannerPage("academic");
@@ -3334,8 +3295,8 @@ renderHome();
           events = originalEvents;
           console.error("Could not save academic start date:", error);
           errorEl.textContent =
-            "Could not save the date. Please try again. " +
-            (error.message || "");
+            "Could not save the date. " +
+            (error.message || "Please try again.");
         }
       });
       });
