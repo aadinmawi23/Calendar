@@ -2832,7 +2832,8 @@ renderHome();
     "academicCalendarEvents_v1",
     "dailyPlannerTasks_v1",
     "dailyPlannerCustomColors_v1",
-    "homeDueTodayChecks"
+    "homeDueTodayChecks",
+    "plannerAcademicStartDate_v1"
   ];
 
   let cloudSyncReady = false;
@@ -2916,6 +2917,177 @@ renderHome();
     }
   };
 
+
+  // PLANNER_ACADEMIC_START_DATE_PICKER_V1
+  async function ensurePlannerStartDate(userId) {
+    const START_KEY = "plannerAcademicStartDate_v1";
+    const EVENTS_KEY = "academicCalendarEvents_v1";
+
+    // The date is already configured for this account.
+    if (localStorage.getItem(START_KEY)) return;
+
+    return new Promise(resolve => {
+      const overlay = document.createElement("div");
+
+      overlay.style.cssText = `
+        position:fixed;inset:0;z-index:999999;
+        display:flex;align-items:center;justify-content:center;
+        padding:20px;background:rgba(15,20,30,.55);
+        backdrop-filter:blur(5px);
+      `;
+
+      overlay.innerHTML = `
+        <div style="
+          width:min(430px,100%);box-sizing:border-box;
+          padding:28px;border-radius:18px;background:#fff;
+          color:#20242b;box-shadow:0 18px 60px rgba(0,0,0,.2);
+          font-family:inherit;
+        ">
+          <div style="font-size:12px;letter-spacing:1.5px;
+            font-weight:700;color:#8b6471;margin-bottom:12px">
+            ACADEMIC PLANNER SETUP
+          </div>
+
+          <h2 style="font-size:23px;margin:0 0 10px">
+            Choose your start date
+          </h2>
+
+          <p style="font-size:14px;line-height:1.6;
+            color:#667080;margin:0 0 22px">
+            Select when your academic schedule should begin.
+            Your academic events will be shifted together while
+            preserving their existing intervals.
+          </p>
+
+          <label for="planner-start-date" style="
+            display:block;font-size:13px;font-weight:600;
+            margin-bottom:8px">
+            Academic calendar start date
+          </label>
+
+          <input id="planner-start-date" type="date"
+            value="2026-11-12"
+            style="
+              width:100%;box-sizing:border-box;padding:12px;
+              border:1px solid #d9dce2;border-radius:9px;
+              font:inherit;font-size:15px;background:#fff;
+              color:#20242b;
+            ">
+
+          <p id="planner-start-error" style="
+            min-height:18px;font-size:12px;color:#b33a42;
+            margin:9px 0 14px">
+          </p>
+
+          <button id="planner-start-confirm" type="button"
+            style="
+              width:100%;padding:13px;border:0;border-radius:9px;
+              background:#9b5369;color:white;font-weight:700;
+              font-size:14px;cursor:pointer;
+            ">
+            Confirm start date
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const dateInput = overlay.querySelector("#planner-start-date");
+      const errorEl = overlay.querySelector("#planner-start-error");
+      const confirmButton = overlay.querySelector("#planner-start-confirm");
+
+      confirmButton.addEventListener("click", () => {
+        const chosenDate = dateInput.value;
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate)) {
+          errorEl.textContent = "Please select a valid date.";
+          return;
+        }
+
+        if (!Array.isArray(events) || !events.length) {
+          errorEl.textContent = "No calendar events were found.";
+          return;
+        }
+
+        const academicDates = events
+          .filter(e =>
+            e &&
+            e.calendar === "academic" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(e.date || "")
+          )
+          .map(e => e.date)
+          .sort();
+
+        if (!academicDates.length) {
+          errorEl.textContent = "No dated academic events were found.";
+          return;
+        }
+
+        const earliest = academicDates[0];
+
+        const toUTC = date => {
+          const [y, m, d] = date.split("-").map(Number);
+          return Date.UTC(y, m - 1, d);
+        };
+
+        const shiftDays = Math.round(
+          (toUTC(chosenDate) - toUTC(earliest)) / 86400000
+        );
+
+        // Keep a recoverable copy before changing the schedule.
+        const original = localStorage.getItem(EVENTS_KEY) ||
+          JSON.stringify(events);
+
+        const backupKey =
+          EVENTS_KEY + "_backup_before_start_date_" + Date.now();
+
+        localStorage.setItem(backupKey, original);
+
+        // Shift academic events only. Personal events remain unchanged.
+        events = events.map(event => {
+          if (
+            !event ||
+            event.calendar !== "academic" ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
+          ) {
+            return event;
+          }
+
+          const shiftedDate = new Date(
+            toUTC(event.date) + shiftDays * 86400000
+          );
+
+          return {
+            ...event,
+            date: shiftedDate.toISOString().slice(0, 10)
+          };
+        });
+
+        localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+        localStorage.setItem(START_KEY, chosenDate);
+
+        // Open the calendar in the month containing the chosen date.
+        try {
+          const [year, month] = chosenDate.split("-").map(Number);
+          viewDate = new Date(year, month - 1, 1);
+        } catch (e) {}
+
+        overlay.remove();
+
+        if (typeof window.refreshPage === "function") {
+          window.refreshPage();
+        }
+
+        console.log("Academic start date saved:", chosenDate);
+        console.log("Previous first academic date:", earliest);
+        console.log("Days shifted:", shiftDays);
+        console.log("Backup:", backupKey);
+
+        resolve();
+      });
+    });
+  }
+
   async function initializePlannerCloudSync(user) {
     cloudSyncReady = false;
     cloudSyncUserId = user?.id || null;
@@ -2955,6 +3127,14 @@ renderHome();
       }
 
       if (cloudSyncUserId !== user.id) return;
+
+      await ensurePlannerStartDate(user.id);
+
+      if (cloudSyncUserId !== user.id) return;
+
+      // Save the selected start date and shifted calendar to the account.
+      await writePlannerSnapshot(user.id, readPlannerSnapshot());
+
       cloudSyncReady = true;
       setStatus("Your planner is synced to your account.");
     } catch (error) {
