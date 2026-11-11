@@ -1515,6 +1515,95 @@ body,
 
 
 
+
+<style>
+/* ACADEMIC_START_DATE_SHARED_RESPONSIVE_V1 */
+#planner-start-date-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+  background: rgba(15,20,30,.55) !important;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+#planner-start-date-overlay .planner-start-date-dialog {
+  width: min(430px, 100%) !important;
+  max-width: 430px !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  padding: clamp(20px, 5vw, 28px) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  color: #20242b !important;
+  box-shadow: 0 18px 60px rgba(0,0,0,.2) !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+.planner-start-date-input {
+  display: block !important;
+  width: 100% !important;
+  max-width: 360px !important;
+  min-height: 48px !important;
+  box-sizing: border-box !important;
+  padding: 12px !important;
+  border: 1px solid #d9dce2 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #20242b !important;
+  font: inherit !important;
+  font-size: 16px !important;
+  color-scheme: light;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+#planner-start-date-overlay .planner-start-date-confirm {
+  display: block !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  padding: 13px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: #9b5369 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+#planner-start-date-overlay .planner-start-date-confirm:focus-visible,
+.planner-start-date-input:focus-visible {
+  outline: 2px solid #9b5369 !important;
+  outline-offset: 2px !important;
+}
+@media (max-width: 600px) {
+  #planner-start-date-overlay {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+  }
+  #planner-start-date-overlay .planner-start-date-dialog {
+    width: 100% !important;
+    max-width: 430px !important;
+    padding: 22px 18px !important;
+    border-radius: 16px !important;
+  }
+}
+@media (max-height: 520px) {
+  #planner-start-date-overlay {
+    align-items: flex-start !important;
+  }
+  #planner-start-date-overlay .planner-start-date-dialog {
+    max-height: calc(100vh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    margin: auto 0 !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2700,8 +2789,8 @@ function renderSettings() {
 
       <div class="field" style="margin-top:20px">
         <label for="academic-start-date">Academic start date</label>
-        <input id="academic-start-date" type="date"
-          value="${initialDate}" style="max-width:260px">
+        <input id="academic-start-date" class="planner-start-date-input" type="date"
+          value="${initialDate}">
       </div>
 
       <button type="button" class="primary" id="save-academic-start-date">
@@ -2796,8 +2885,6 @@ function renderSettings() {
       status.textContent = shiftDays
         ? `Start date saved. Academic events shifted by ${shiftDays} day(s).`
         : "Start date saved. No event shift was needed.";
-
-      showPlannerPage("academic");
     } catch (error) {
       console.error("Could not save academic start date:", error);
       status.textContent = "Could not save the date. Please try again.";
@@ -3063,32 +3150,28 @@ renderHome();
     const START_KEY = "plannerAcademicStartDate_v1";
     const EVENTS_KEY = "academicCalendarEvents_v1";
 
-    // The date is already configured for this account.
-    if (localStorage.getItem(START_KEY)) return;
+    // Never show onboarding unless a signed-in account is being initialized.
+    if (!userId) return;
+
+    // The account's date is restored from cloud before this check.
+    const existingStartDate = localStorage.getItem(START_KEY);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(existingStartDate || "")) return;
 
     return new Promise(resolve => {
       const overlay = document.createElement("div");
-
-      overlay.style.cssText = `
-        position:fixed;inset:0;z-index:999999;
-        display:flex;align-items:center;justify-content:center;
-        padding:20px;background:rgba(15,20,30,.55);
-        backdrop-filter:blur(5px);
-      `;
+      overlay.id = "planner-start-date-overlay";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-labelledby", "planner-start-title");
 
       overlay.innerHTML = `
-        <div style="
-          width:min(430px,100%);box-sizing:border-box;
-          padding:28px;border-radius:18px;background:#fff;
-          color:#20242b;box-shadow:0 18px 60px rgba(0,0,0,.2);
-          font-family:inherit;
-        ">
+        <div class="planner-start-date-dialog">
           <div style="font-size:12px;letter-spacing:1.5px;
             font-weight:700;color:#8b6471;margin-bottom:12px">
             ACADEMIC PLANNER SETUP
           </div>
 
-          <h2 style="font-size:23px;margin:0 0 10px">
+          <h2 id="planner-start-title" style="font-size:23px;margin:0 0 10px">
             Choose your start date
           </h2>
 
@@ -3105,26 +3188,17 @@ renderHome();
             Academic calendar start date
           </label>
 
-          <input id="planner-start-date" type="date"
-            value="2026-11-12"
-            style="
-              width:100%;box-sizing:border-box;padding:12px;
-              border:1px solid #d9dce2;border-radius:9px;
-              font:inherit;font-size:15px;background:#fff;
-              color:#20242b;
-            ">
+          <input id="planner-start-date"
+            class="planner-start-date-input" type="date"
+            value="2026-11-12">
 
           <p id="planner-start-error" style="
             min-height:18px;font-size:12px;color:#b33a42;
             margin:9px 0 14px">
           </p>
 
-          <button id="planner-start-confirm" type="button"
-            style="
-              width:100%;padding:13px;border:0;border-radius:9px;
-              background:#9b5369;color:white;font-weight:700;
-              font-size:14px;cursor:pointer;
-            ">
+          <button id="planner-start-confirm"
+            class="planner-start-date-confirm" type="button">
             Confirm start date
           </button>
         </div>
@@ -3227,7 +3301,36 @@ renderHome();
       });
   }
 
-  async function initializePlannerCloudSync(user) {
+  // Share one in-flight initialisation so onboarding appears only once.
+  let cloudSyncInitializationPromise = null;
+  let cloudSyncInitializationUserId = null;
+  let cloudSyncInitializationGeneration = 0;
+
+  function initializePlannerCloudSync(user) {
+    if (!user) return Promise.resolve();
+
+    if (
+      cloudSyncInitializationPromise &&
+      cloudSyncInitializationUserId === user.id
+    ) {
+      return cloudSyncInitializationPromise;
+    }
+
+    const generation = ++cloudSyncInitializationGeneration;
+    cloudSyncInitializationUserId = user.id;
+
+    const task = initializePlannerCloudSyncOnce(user);
+    cloudSyncInitializationPromise = task.finally(() => {
+      if (cloudSyncInitializationGeneration === generation) {
+        cloudSyncInitializationPromise = null;
+        cloudSyncInitializationUserId = null;
+      }
+    });
+
+    return cloudSyncInitializationPromise;
+  }
+
+  async function initializePlannerCloudSyncOnce(user) {
     cloudSyncReady = false;
     cloudSyncUserId = user?.id || null;
     clearTimeout(cloudSyncTimer);
@@ -3415,6 +3518,9 @@ renderHome();
       // Defer database calls until the auth callback has returned.
       setTimeout(() => initializePlannerCloudSync(user), 0);
     } else {
+      cloudSyncInitializationGeneration += 1;
+      cloudSyncInitializationPromise = null;
+      cloudSyncInitializationUserId = null;
       cloudSyncReady = false;
       cloudSyncUserId = null;
       clearTimeout(cloudSyncTimer);
