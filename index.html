@@ -3123,66 +3123,63 @@ renderHome();
           return;
         }
 
-        if (!Array.isArray(events) || !events.length) {
-          errorEl.textContent = "No calendar events were found.";
-          return;
-        }
-
-        const academicDates = events
+        const academicDates = (Array.isArray(events) ? events : [])
           .filter(e =>
             e &&
             e.calendar === "academic" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(e.date || "")
+            /^\\d{4}-\\d{2}-\\d{2}$/.test(e.date || "")
           )
           .map(e => e.date)
           .sort();
 
-        if (!academicDates.length) {
-          errorEl.textContent = "No dated academic events were found.";
-          return;
-        }
+        let shiftDays = 0;
+        let earliest = null;
 
-        const earliest = academicDates[0];
+        if (academicDates.length) {
+          earliest = academicDates[0];
 
-        const toUTC = date => {
-          const [y, m, d] = date.split("-").map(Number);
-          return Date.UTC(y, m - 1, d);
-        };
+          const toUTC = date => {
+            const [y, m, d] = date.split("-").map(Number);
+            return Date.UTC(y, m - 1, d);
+          };
 
-        const shiftDays = Math.round(
-          (toUTC(chosenDate) - toUTC(earliest)) / 86400000
-        );
-
-        // Keep a recoverable copy before changing the schedule.
-        const original = localStorage.getItem(EVENTS_KEY) ||
-          JSON.stringify(events);
-
-        const backupKey =
-          EVENTS_KEY + "_backup_before_start_date_" + Date.now();
-
-        localStorage.setItem(backupKey, original);
-
-        // Shift academic events only. Personal events remain unchanged.
-        events = events.map(event => {
-          if (
-            !event ||
-            event.calendar !== "academic" ||
-            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
-          ) {
-            return event;
-          }
-
-          const shiftedDate = new Date(
-            toUTC(event.date) + shiftDays * 86400000
+          shiftDays = Math.round(
+            (toUTC(chosenDate) - toUTC(earliest)) / 86400000
           );
 
-          return {
-            ...event,
-            date: shiftedDate.toISOString().slice(0, 10)
-          };
-        });
+          if (shiftDays !== 0) {
+            const original = localStorage.getItem(EVENTS_KEY) ||
+              JSON.stringify(events);
 
-        localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+            const backupKey =
+              EVENTS_KEY + "_backup_before_start_date_" + Date.now();
+
+            localStorage.setItem(backupKey, original);
+
+            events = events.map(event => {
+              if (
+                !event ||
+                event.calendar !== "academic" ||
+                !/^\\d{4}-\\d{2}-\\d{2}$/.test(event.date || "")
+              ) {
+                return event;
+              }
+
+              const shiftedDate = new Date(
+                toUTC(event.date) + shiftDays * 86400000
+              );
+
+              return {
+                ...event,
+                date: shiftedDate.toISOString().slice(0, 10)
+              };
+            });
+
+            localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+          }
+        }
+
+        // Always save the selected date, even when no academic events exist.
         localStorage.setItem(START_KEY, chosenDate);
 
         // Open the calendar in the month containing the chosen date.
