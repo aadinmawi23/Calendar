@@ -2736,7 +2736,9 @@ function renderSettings() {
       return;
     }
 
-    const earliest = academicDates[0];
+    const previousStartDate =
+      localStorage.getItem("plannerAcademicStartDate_v1") ||
+      academicDates[0];
 
     const toUTC = date => {
       const [y, m, d] = date.split("-").map(Number);
@@ -2744,7 +2746,7 @@ function renderSettings() {
     };
 
     const shiftDays = Math.round(
-      (toUTC(chosenDate) - toUTC(earliest)) / 86400000
+      (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
     );
 
     if (shiftDays !== 0) {
