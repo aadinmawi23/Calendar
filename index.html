@@ -2718,15 +2718,6 @@ function renderSettings() {
   const status = document.getElementById("academic-start-date-status");
 
   document.getElementById("save-academic-start-date").addEventListener("click", () => {
-    const accountEmail =
-      document.getElementById("account-menu-email")?.textContent.trim();
-
-    if (!accountEmail) {
-      status.textContent =
-        "Sign in to your account before saving this setting.";
-      return;
-    }
-
     const chosenDate = input.value;
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate)) {
@@ -3233,12 +3224,28 @@ renderHome();
 
       if (error) throw error;
 
+      const START_KEY = "plannerAcademicStartDate_v1";
       const localSnapshot = readPlannerSnapshot();
       let finalSnapshot;
+
+      // The onboarding date belongs to the account, not the browser.
+      const accountHasStartDate = Boolean(
+        row &&
+        row.data &&
+        typeof row.data === "object" &&
+        /^\\d{4}-\\d{2}-\\d{2}$/.test(row.data[START_KEY] || "")
+      );
 
       if (row && row.data && typeof row.data === "object") {
         // Cloud values win when present; local-only keys are retained.
         finalSnapshot = { ...localSnapshot, ...row.data };
+
+        // A browser's old date must not skip another account's setup.
+        if (!accountHasStartDate) {
+          delete finalSnapshot[START_KEY];
+          localStorage.removeItem(START_KEY);
+        }
+
         applyPlannerSnapshot(finalSnapshot);
 
         // Refresh the visible calendar after loading cloud data.
@@ -3249,8 +3256,12 @@ renderHome();
         // Persist the merged snapshot so any local-only keys are uploaded too.
         await writePlannerSnapshot(user.id, finalSnapshot);
       } else {
-        // First sign-in: preserve and upload existing browser data.
-        finalSnapshot = localSnapshot;
+        // First sign-in: preserve browser data, but require this account
+        // to choose its own academic calendar start date.
+        finalSnapshot = { ...localSnapshot };
+        delete finalSnapshot[START_KEY];
+        localStorage.removeItem(START_KEY);
+
         await writePlannerSnapshot(user.id, finalSnapshot);
       }
 
