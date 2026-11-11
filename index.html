@@ -719,16 +719,18 @@ body.sidebar-collapsed #sidebar-collapse-toggle {
     font-size: 20px !important;
   }
   .calendar-grid {
-    min-width: 900px !important;
-    gap: 5px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 3px !important;
   }
   .day-name {
     font-size: 11px !important;
     padding: 7px 0 10px !important;
   }
   .day {
-    height: 124px !important;
-    padding: 6px !important;
+    height: 64px !important;
+    padding: 3px !important;
     border-radius: 9px !important;
   }
   .day-number {
