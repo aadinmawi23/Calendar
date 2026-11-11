@@ -2715,6 +2715,13 @@ function renderSettings() {
   `;
 
   const input = document.getElementById("academic-start-date");
+  input.addEventListener("click", () => {
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+      }
+    } catch (_) {}
+  });
   const status = document.getElementById("academic-start-date-status");
 
   document.getElementById("save-academic-start-date").addEventListener("click", () => {
@@ -2725,64 +2732,76 @@ function renderSettings() {
       return;
     }
 
-    const academicDates = events
-      .filter(e => e && e.calendar === "academic" &&
-        /^\d{4}-\d{2}-\d{2}$/.test(e.date || ""))
-      .map(e => e.date)
+    const academicDates = (Array.isArray(events) ? events : [])
+      .filter(event =>
+        event &&
+        event.calendar === "academic" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
+      )
+      .map(event => event.date)
       .sort();
-
-    if (!academicDates.length) {
-      status.textContent = "No dated academic events were found.";
-      return;
-    }
 
     const previousStartDate =
       localStorage.getItem("plannerAcademicStartDate_v1") ||
-      academicDates[0];
+      academicDates[0] ||
+      chosenDate;
 
     const toUTC = date => {
-      const [y, m, d] = date.split("-").map(Number);
-      return Date.UTC(y, m - 1, d);
+      const [year, month, day] = date.split("-").map(Number);
+      return Date.UTC(year, month - 1, day);
     };
 
     const shiftDays = Math.round(
       (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
     );
 
-    if (shiftDays !== 0) {
-      const original = localStorage.getItem("academicCalendarEvents_v1");
+    try {
+      if (shiftDays !== 0 && academicDates.length) {
+        const original = localStorage.getItem("academicCalendarEvents_v1");
 
-      if (original !== null) {
-        localStorage.setItem(
-          "academicCalendarEvents_v1_backup_" + Date.now(),
-          original
-        );
-      }
-
-      events = events.map(event => {
-        if (!event || event.calendar !== "academic" ||
-            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")) {
-          return event;
+        if (original !== null) {
+          localStorage.setItem(
+            "academicCalendarEvents_v1_backup_" + Date.now(),
+            original
+          );
         }
 
-        const shifted = new Date(
-          toUTC(event.date) + shiftDays * 86400000
-        );
+        events = events.map(event => {
+          if (
+            !event ||
+            event.calendar !== "academic" ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
+          ) {
+            return event;
+          }
 
-        return {
-          ...event,
-          date: shifted.toISOString().slice(0, 10)
-        };
-      });
+          const shifted = new Date(
+            toUTC(event.date) + shiftDays * 86400000
+          );
 
-      saveEvents();
+          return {
+            ...event,
+            date: shifted.toISOString().slice(0, 10)
+          };
+        });
+
+        saveEvents();
+      }
+
+      localStorage.setItem("plannerAcademicStartDate_v1", chosenDate);
+
+      const [year, month] = chosenDate.split("-").map(Number);
+      viewDate = new Date(year, month - 1, 1);
+
+      status.textContent = shiftDays
+        ? `Start date saved. Academic events shifted by ${shiftDays} day(s).`
+        : "Start date saved. No event shift was needed.";
+
+      showPlannerPage("academic");
+    } catch (error) {
+      console.error("Could not save academic start date:", error);
+      status.textContent = "Could not save the date. Please try again.";
     }
-
-    // This key is already included in the existing Supabase PLANNER_KEYS.
-    localStorage.setItem("plannerAcademicStartDate_v1", chosenDate);
-
-    status.textContent =
-      "Start date saved. Your account sync will update this preference.";
   });
 }
 
@@ -3114,6 +3133,13 @@ renderHome();
       document.body.appendChild(overlay);
 
       const dateInput = overlay.querySelector("#planner-start-date");
+      dateInput.addEventListener("click", () => {
+        try {
+          if (typeof dateInput.showPicker === "function") {
+            dateInput.showPicker();
+          }
+        } catch (_) {}
+      });
       const errorEl = overlay.querySelector("#planner-start-error");
       const confirmButton = overlay.querySelector("#planner-start-confirm");
 
@@ -3126,34 +3152,33 @@ renderHome();
         }
 
         const academicDates = (Array.isArray(events) ? events : [])
-          .filter(e =>
-            e &&
-            e.calendar === "academic" &&
-            /^\\d{4}-\\d{2}-\\d{2}$/.test(e.date || "")
+          .filter(event =>
+            event &&
+            event.calendar === "academic" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
           )
-          .map(e => e.date)
+          .map(event => event.date)
           .sort();
 
-        let shiftDays = 0;
-        let earliest = null;
+        const previousStartDate = academicDates[0] || chosenDate;
 
-        if (academicDates.length) {
-          earliest = academicDates[0];
+        const toUTC = date => {
+          const [year, month, day] = date.split("-").map(Number);
+          return Date.UTC(year, month - 1, day);
+        };
 
-          const toUTC = date => {
-            const [y, m, d] = date.split("-").map(Number);
-            return Date.UTC(y, m - 1, d);
-          };
+        const shiftDays = Math.round(
+          (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
+        );
 
-          shiftDays = Math.round(
-            (toUTC(chosenDate) - toUTC(earliest)) / 86400000
-          );
+        let backupKey = null;
 
-          if (shiftDays !== 0) {
+        try {
+          if (shiftDays !== 0 && academicDates.length) {
             const original = localStorage.getItem(EVENTS_KEY) ||
               JSON.stringify(events);
 
-            const backupKey =
+            backupKey =
               EVENTS_KEY + "_backup_before_start_date_" + Date.now();
 
             localStorage.setItem(backupKey, original);
@@ -3162,7 +3187,7 @@ renderHome();
               if (
                 !event ||
                 event.calendar !== "academic" ||
-                !/^\\d{4}-\\d{2}-\\d{2}$/.test(event.date || "")
+                !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")
               ) {
                 return event;
               }
@@ -3177,33 +3202,29 @@ renderHome();
               };
             });
 
-            localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+            saveEvents();
           }
-        }
 
-        // Always save the selected date, even when no academic events exist.
-        localStorage.setItem(START_KEY, chosenDate);
+          localStorage.setItem(START_KEY, chosenDate);
 
-        // Open the calendar in the month containing the chosen date.
-        try {
           const [year, month] = chosenDate.split("-").map(Number);
           viewDate = new Date(year, month - 1, 1);
-        } catch (e) {}
 
-        overlay.remove();
+          overlay.remove();
+          showPlannerPage("academic");
 
-        if (typeof window.refreshPage === "function") {
-          window.refreshPage();
+          console.log("Academic start date saved:", chosenDate);
+          console.log("Days shifted:", shiftDays);
+          if (backupKey) console.log("Backup:", backupKey);
+
+          resolve();
+        } catch (error) {
+          console.error("Could not save academic start date:", error);
+          errorEl.textContent =
+            "Could not save the date. Please try again.";
         }
-
-        console.log("Academic start date saved:", chosenDate);
-        console.log("Previous first academic date:", earliest);
-        console.log("Days shifted:", shiftDays);
-        console.log("Backup:", backupKey);
-
-        resolve();
       });
-    });
+      });
   }
 
   async function initializePlannerCloudSync(user) {
@@ -3232,7 +3253,7 @@ renderHome();
         row &&
         row.data &&
         typeof row.data === "object" &&
-        /^\\d{4}-\\d{2}-\\d{2}$/.test(row.data[START_KEY] || "")
+        /^\d{4}-\d{2}-\d{2}$/.test(row.data[START_KEY] || "")
       );
 
       if (row && row.data && typeof row.data === "object") {
