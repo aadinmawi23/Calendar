@@ -1524,6 +1524,7 @@ body,
     <button data-page="academic">Academic Calendar</button>
     <button data-page="personal">Personal Calendar</button>
     <button data-page="syllabus">Syllabus</button>
+    <button data-page="settings">Settings</button>
   </nav>
   <div class="sidebar-account">
     <button type="button" id="account-trigger" class="account-trigger"
@@ -1565,6 +1566,13 @@ body,
   <button type="button" data-main-page="academic" aria-label="Academic Calendar" title="Academic Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h2M14 14h2M8 17h2"/></svg></button>
   <button type="button" data-main-page="personal" aria-label="Personal Calendar" title="Personal Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><circle cx="12" cy="15" r="2.5"/></svg></button>
   <button type="button" data-main-page="syllabus" aria-label="Syllabus" title="Syllabus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 4.5v16M8 6h8M8 10h8M8 14h5"/></svg></button>
+  <button type="button" data-main-page="settings"
+    aria-label="Settings" title="Settings">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.93 4.93l2.12 2.12m9.9 9.9 2.12 2.12m0-14.14-2.12 2.12m-9.9 9.9-2.12 2.12"/>
+    </svg>
+  </button>
 </nav>
 <main class="main" id="main"></main>
 </div>
@@ -2670,8 +2678,126 @@ function renderSyllabus() {
   });
 }
 
+
+// PLANNER_SETTINGS_DATE_PICKER_V1
+function renderSettings() {
+  const main = document.getElementById("main");
+  const savedDate = localStorage.getItem("plannerAcademicStartDate_v1");
+  const initialDate = savedDate || "2026-11-12";
+
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Settings</h2>
+        <div class="syllabus-intro">Manage your planner preferences</div>
+      </div>
+    </div>
+
+    <section class="card" style="max-width:620px;padding:22px">
+      <h3 style="margin:0 0 8px">Academic calendar</h3>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6">
+        Set the first date of your academic schedule. Changing this date
+        shifts dated academic events together while preserving their spacing.
+        Personal calendar events remain unchanged.
+      </p>
+
+      <div class="field" style="margin-top:20px">
+        <label for="academic-start-date">Academic start date</label>
+        <input id="academic-start-date" type="date"
+          value="${initialDate}" style="max-width:260px">
+      </div>
+
+      <button type="button" class="primary" id="save-academic-start-date">
+        Save start date
+      </button>
+
+      <p id="academic-start-date-status"
+        role="status" style="font-size:12px;margin-top:12px;color:var(--muted)">
+      </p>
+    </section>
+  `;
+
+  const input = document.getElementById("academic-start-date");
+  const status = document.getElementById("academic-start-date-status");
+
+  document.getElementById("save-academic-start-date").addEventListener("click", () => {
+    const accountEmail =
+      document.getElementById("account-menu-email")?.textContent.trim();
+
+    if (!accountEmail) {
+      status.textContent =
+        "Sign in to your account before saving this setting.";
+      return;
+    }
+
+    const chosenDate = input.value;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate)) {
+      status.textContent = "Please select a valid date.";
+      return;
+    }
+
+    const academicDates = events
+      .filter(e => e && e.calendar === "academic" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(e.date || ""))
+      .map(e => e.date)
+      .sort();
+
+    if (!academicDates.length) {
+      status.textContent = "No dated academic events were found.";
+      return;
+    }
+
+    const earliest = academicDates[0];
+
+    const toUTC = date => {
+      const [y, m, d] = date.split("-").map(Number);
+      return Date.UTC(y, m - 1, d);
+    };
+
+    const shiftDays = Math.round(
+      (toUTC(chosenDate) - toUTC(earliest)) / 86400000
+    );
+
+    if (shiftDays !== 0) {
+      const original = localStorage.getItem("academicCalendarEvents_v1");
+
+      if (original !== null) {
+        localStorage.setItem(
+          "academicCalendarEvents_v1_backup_" + Date.now(),
+          original
+        );
+      }
+
+      events = events.map(event => {
+        if (!event || event.calendar !== "academic" ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(event.date || "")) {
+          return event;
+        }
+
+        const shifted = new Date(
+          toUTC(event.date) + shiftDays * 86400000
+        );
+
+        return {
+          ...event,
+          date: shifted.toISOString().slice(0, 10)
+        };
+      });
+
+      saveEvents();
+    }
+
+    // This key is already included in the existing Supabase PLANNER_KEYS.
+    localStorage.setItem("plannerAcademicStartDate_v1", chosenDate);
+
+    status.textContent =
+      "Start date saved. Your account sync will update this preference.";
+  });
+}
+
 function showPlannerPage(page) {
-  const validPages = ["home", "academic", "personal", "syllabus"];
+  const validPages = ["home", "academic", "personal", "syllabus", "settings"];
   if (!validPages.includes(page)) page = "home";
   activePage = page;
 
@@ -2684,6 +2810,7 @@ function showPlannerPage(page) {
 
   if (activePage === "home") renderHome();
   else if (activePage === "syllabus") renderSyllabus();
+  else if (activePage === "settings") renderSettings();
   else renderCalendar(activePage);
 }
 
@@ -2699,7 +2826,7 @@ document.querySelectorAll(".nav button, [data-main-page]").forEach(b =>
 
 // NATIVE_PLANNER_HISTORY_V3
 (function () {
-  const validPages = ["home", "academic", "personal", "syllabus"];
+  const validPages = ["home", "academic", "personal", "syllabus", "settings"];
 
   if (!history.state || !validPages.includes(history.state.plannerPage)) {
     history.replaceState(
@@ -2735,6 +2862,7 @@ document.querySelectorAll(".nav button, [data-main-page]").forEach(b =>
 function refreshPage() {
   if (activePage === "home") renderHome();
   else if (activePage === "syllabus") renderSyllabus();
+  else if (activePage === "settings") renderSettings();
   else renderCalendar(activePage);
 }
 // PLANNER_OPEN_CURRENT_MONTH_AND_DATE_V1
