@@ -2876,13 +2876,14 @@ function renderSettings() {
 
     try {
       if (shiftDays !== 0 && academicDates.length) {
-        const original = localStorage.getItem("academicCalendarEvents_v1");
+        const originalEvents = events;
 
-        if (original !== null) {
-          localStorage.setItem(
-            "academicCalendarEvents_v1_backup_" + Date.now(),
-            original
-          );
+        // Remove redundant automatic date-shift backups to free localStorage.
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("academicCalendarEvents_v1_backup_")) {
+            localStorage.removeItem(key);
+          }
         }
 
         events = events.map(event => {
@@ -2916,8 +2917,10 @@ function renderSettings() {
         ? `Start date saved. Academic events shifted by ${shiftDays} day(s).`
         : "Start date saved. No event shift was needed.";
     } catch (error) {
+      events = originalEvents || events;
       console.error("Could not save academic start date:", error);
-      status.textContent = "Could not save the date. Please try again.";
+      status.textContent = "Could not save the date. Please try again. " +
+        (error.message || "");
     }
   });
 }
@@ -3282,17 +3285,17 @@ renderHome();
           (toUTC(chosenDate) - toUTC(previousStartDate)) / 86400000
         );
 
-        let backupKey = null;
+        const originalEvents = events;
 
         try {
           if (shiftDays !== 0 && academicDates.length) {
-            const original = localStorage.getItem(EVENTS_KEY) ||
-              JSON.stringify(events);
-
-            backupKey =
-              EVENTS_KEY + "_backup_before_start_date_" + Date.now();
-
-            localStorage.setItem(backupKey, original);
+            // Remove redundant automatic date-shift backups to free localStorage.
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith(EVENTS_KEY + "_backup_")) {
+                localStorage.removeItem(key);
+              }
+            }
 
             events = events.map(event => {
               if (
@@ -3326,13 +3329,13 @@ renderHome();
 
           console.log("Academic start date saved:", chosenDate);
           console.log("Days shifted:", shiftDays);
-          if (backupKey) console.log("Backup:", backupKey);
-
           resolve();
         } catch (error) {
+          events = originalEvents;
           console.error("Could not save academic start date:", error);
           errorEl.textContent =
-            "Could not save the date. Please try again.";
+            "Could not save the date. Please try again. " +
+            (error.message || "");
         }
       });
       });
